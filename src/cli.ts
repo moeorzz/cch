@@ -1,4 +1,15 @@
 import { Command } from "commander";
+import { listCommand } from "./commands/list.js";
+import { searchCommand } from "./commands/search.js";
+import { defaultCommand } from "./commands/default.js";
+import { newCommand } from "./commands/new.js";
+import { lsCommand } from "./commands/ls.js";
+import { attachCommand } from "./commands/attach.js";
+import { killCommand } from "./commands/kill.js";
+import { resumeCommand } from "./commands/resume.js";
+import { configCommand } from "./commands/config.js";
+import { loadSessions } from "./services/history.js";
+import { formatSessionTable } from "./utils/display.js";
 
 const program = new Command();
 
@@ -7,4 +18,66 @@ program
   .description("Claude Code History — manage conversation history across projects")
   .version("0.1.0");
 
-program.parse();
+program
+  .command("list")
+  .description("List recent sessions from history")
+  .option("-n, --number <n>", "Number of sessions to show", "20")
+  .action((opts) => listCommand(parseInt(opts.number, 10)));
+
+program
+  .command("search <keyword>")
+  .description("Search sessions by keyword")
+  .action((keyword) => searchCommand(keyword));
+
+program
+  .command("new [description...]")
+  .description("Create a new Claude session in current directory")
+  .option("-f, --force", "Kill existing session with same name first")
+  .action((desc, opts) => newCommand(desc?.join(" ") || undefined, opts.force || false));
+
+program
+  .command("ls")
+  .description("List active multiplexer sessions")
+  .action(() => lsCommand());
+
+program
+  .command("attach <name>")
+  .description("Attach to an active multiplexer session")
+  .action((name) => attachCommand(name));
+
+program
+  .command("kill <name>")
+  .description("Kill a multiplexer session")
+  .action((name) => killCommand(name));
+
+program
+  .command("resume <sessionId>")
+  .description("Resume a session by ID in multiplexer")
+  .action((id) => resumeCommand(id));
+
+program
+  .command("config [key] [value]")
+  .description("Show or set configuration")
+  .action((key, value) => configCommand(key, value));
+
+// Default behavior: no subcommand → show help + recent sessions
+// Unknown args → treat as natural language search
+const known = ["list", "search", "new", "ls", "attach", "kill", "resume", "config", "help"];
+const args = process.argv.slice(2);
+
+if (args.length === 0) {
+  // Show help + last 5 sessions
+  program.outputHelp();
+  console.log("\nRecent sessions:");
+  const recent = loadSessions(5);
+  if (recent.length) {
+    console.log(formatSessionTable(recent));
+  } else {
+    console.log("  No history found.");
+  }
+} else if (args.length > 0 && !known.includes(args[0]) && !args[0].startsWith("-")) {
+  // Natural language search
+  defaultCommand(args.join(" "));
+} else {
+  program.parse();
+}
