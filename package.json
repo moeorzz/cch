@@ -1,0 +1,38 @@
+{
+  "name": "cch",
+  "version": "0.1.0",
+  "description": "Claude Code History — AI-powered conversation history management with Zellij/tmux session support",
+  "type": "module",
+  "bin": {
+    "ch": "./bin/ch.js"
+  },
+  "main": "./dist/cli.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "tsx src/cli.ts",
+    "test": "node --test dist/**/*.test.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "history",
+    "session",
+    "zellij",
+    "tmux",
+    "cli"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "esbuild": "^0.27.4",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}
