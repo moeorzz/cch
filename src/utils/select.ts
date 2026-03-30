@@ -92,8 +92,10 @@ export function interactiveSelect(items: SelectItem[], hint = "Up/Down to naviga
     function renderLines(): string[] {
       const { start, end } = getWindow();
       const lines: string[] = [];
-      const inputDisplay = inputBuf ? ` > ${inputBuf}_` : "";
-      lines.push(truncate(`${DIM}${hint}${RESET}${inputDisplay}`, cols));
+      const statusDisplay = pendingDelete
+        ? ` ${ESC}[31md — press d again to kill${RESET}`
+        : inputBuf ? ` > ${inputBuf}_` : "";
+      lines.push(truncate(`${DIM}${hint}${RESET}${statusDisplay}`, cols));
 
       for (let i = start; i < end; i++) {
         const raw = items[i].label;
@@ -138,8 +140,11 @@ export function interactiveSelect(items: SelectItem[], hint = "Up/Down to naviga
     }
 
     let inputBuf = "";
+    let pendingDelete = false;
+    let deleteTimer: ReturnType<typeof setTimeout> | null = null;
 
     function cleanup() {
+      if (deleteTimer) clearTimeout(deleteTimer);
       process.stdin.setRawMode(false);
       process.stdin.removeListener("data", onData);
       process.stdin.pause();
@@ -151,10 +156,12 @@ export function interactiveSelect(items: SelectItem[], hint = "Up/Down to naviga
 
       if (key === `${ESC}[A` || key === "k") {
         inputBuf = "";
+        pendingDelete = false;
         if (cursor > 0) cursor--;
         draw();
       } else if (key === `${ESC}[B` || key === "j") {
         inputBuf = "";
+        pendingDelete = false;
         if (cursor < items.length - 1) cursor++;
         draw();
       } else if (key === "\r" || key === "\n") {
@@ -169,8 +176,22 @@ export function interactiveSelect(items: SelectItem[], hint = "Up/Down to naviga
         cleanup();
         resolve({ value: items[cursor].value, action: "select" });
       } else if (key === "d" && options?.deleteKey && !inputBuf) {
-        cleanup();
-        resolve({ value: items[cursor].value, action: "delete" });
+        if (pendingDelete) {
+          // dd confirmed
+          pendingDelete = false;
+          if (deleteTimer) clearTimeout(deleteTimer);
+          cleanup();
+          resolve({ value: items[cursor].value, action: "delete" });
+          return;
+        }
+        // First d — show pending
+        pendingDelete = true;
+        draw();
+        deleteTimer = setTimeout(() => {
+          pendingDelete = false;
+          draw();
+        }, 1000);
+        return;
       } else if (key === ESC || key === "q" || key === "\x03") {
         cleanup();
         resolve({ value: -1, action: "cancel" });
