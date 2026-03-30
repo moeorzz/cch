@@ -12,11 +12,10 @@ export async function listCommand(n: number): Promise<void> {
 
   const items = sessions.map((s, i) => {
     const num = String(i + 1).padStart(3);
-    const ts = s.timestamp.slice(0, 16).replace("T", " ");
-    const project = shortenPath(s.cwd || decodePath(s.filePath.split("/").slice(-2, -1)[0])).padEnd(28);
-    const branch = (s.gitBranch || "-").slice(0, 12).padEnd(13);
-    const msg = s.firstMsg.replace(/\n/g, " ").slice(0, 45);
-    return { label: `${num}  ${ts}  ${project} ${branch} ${msg}`, value: i };
+    const msg = s.firstMsg.replace(/\n/g, " ").slice(0, 30);
+    const project = shortenPath(s.cwd || decodePath(s.filePath.split("/").slice(-2, -1)[0]));
+    const ts = s.timestamp.slice(5, 16).replace("T", " "); // MM-DD HH:MM
+    return { label: `${num} ${msg.padEnd(32)} ${project.padEnd(22)} ${ts}`, value: i };
   });
 
   const selected = await interactiveSelect(items);
