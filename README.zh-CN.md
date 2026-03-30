@@ -17,7 +17,19 @@ Claude Code 的对话历史存在 `~/.claude/projects/` 下，按项目目录隔
 
 ```bash
 npm install -g cch
+ch setup          # 自动添加 shell 别名 (cn, cnf, cls, cps, chs)
+source ~/.zshrc   # 或新开终端
 ```
+
+### Claude Code Skill（可选）
+
+安装 skill 后，Claude Code 就能自动帮你用 `ch` 命令：
+
+```bash
+cp -r $(npm root -g)/cch/skill ~/.claude/skills/cch
+```
+
+安装后直接对 Claude Code 说"帮我找之前调试 iOS 的对话"，它会自动调用 `ch` 搜索。
 
 **前置条件：**
 - Node.js >= 18

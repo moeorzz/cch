@@ -17,7 +17,19 @@ Claude Code stores conversation history in `~/.claude/projects/`, scoped per dir
 
 ```bash
 npm install -g cch
+ch setup          # adds shell aliases (cn, cnf, cls, cps, chs)
+source ~/.zshrc   # or open a new terminal
 ```
+
+### Claude Code Skill (optional)
+
+Install the skill so Claude Code knows how to use `ch` for you:
+
+```bash
+cp -r $(npm root -g)/cch/skill ~/.claude/skills/cch
+```
+
+Then you can just tell Claude Code things like "find my iOS debugging conversation" and it will use `ch` automatically.
 
 **Requirements:**
 - Node.js >= 18
