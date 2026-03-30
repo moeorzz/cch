@@ -43,8 +43,8 @@ Then you can just tell Claude Code things like "find my iOS debugging conversati
 Just describe what you remember. AI finds the session.
 
 ```bash
-ch 上次帮我调试 iOS 的那个对话
-ch the one where I was deploying shrimp
+ch the iOS debugging session
+ch the one where I was deploying openclaw
 ch that wallet refactor
 ```
 
