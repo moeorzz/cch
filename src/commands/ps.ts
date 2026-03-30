@@ -3,6 +3,7 @@ import { getSessionsMeta } from "../config/index.js";
 import { interactiveSelect, padEndWidth } from "../utils/select.js";
 
 export async function psCommand(): Promise<void> {
+  let cursorPos = 0;
   while (true) {
     const sessions = await listActiveSessions();
     if (!sessions.length) {
@@ -29,14 +30,15 @@ export async function psCommand(): Promise<void> {
 
     const result = await interactiveSelect(
       items,
-      "Up/Down navigate, Enter attach, d kill, Esc cancel",
-      { deleteKey: true },
+      "Up/Down navigate, Enter attach, dd kill, Esc cancel",
+      { deleteKey: true, initialCursor: cursorPos },
     );
 
     if (result.action === "cancel") return;
 
     if (result.action === "delete") {
       const s = sessions[result.value];
+      cursorPos = result.value;
       await killSession(s.name);
       continue;
     }

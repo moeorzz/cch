@@ -72,11 +72,11 @@ export interface SelectResult {
   action: "select" | "delete" | "cancel";
 }
 
-export function interactiveSelect(items: SelectItem[], hint = "Up/Down to navigate, Enter to select, Esc to cancel", options?: { deleteKey?: boolean }): Promise<SelectResult> {
+export function interactiveSelect(items: SelectItem[], hint = "Up/Down to navigate, Enter to select, Esc to cancel", options?: { deleteKey?: boolean; initialCursor?: number }): Promise<SelectResult> {
   if (!process.stdin.isTTY) return Promise.resolve({ value: -1, action: "cancel" });
 
   return new Promise((resolve) => {
-    let cursor = 0;
+    let cursor = Math.min(options?.initialCursor ?? 0, items.length - 1);
     const cols = process.stdout.columns || 80;
     const rows = process.stdout.rows || 24;
     const pageSize = Math.min(items.length, rows - 4);
