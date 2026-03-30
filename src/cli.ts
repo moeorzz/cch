@@ -8,6 +8,7 @@ import { attachCommand } from "./commands/attach.js";
 import { killCommand } from "./commands/kill.js";
 import { resumeCommand } from "./commands/resume.js";
 import { configCommand } from "./commands/config.js";
+import { setupCommand } from "./commands/setup.js";
 import { loadSessions } from "./services/history.js";
 import { formatSessionTable } from "./utils/display.js";
 
@@ -60,9 +61,14 @@ program
   .description("Show or set configuration")
   .action((key, value) => configCommand(key, value));
 
+program
+  .command("setup")
+  .description("Install shell aliases (cn, cnf, cls, cps, chs)")
+  .action(() => setupCommand());
+
 // Default behavior: no subcommand → show help + recent sessions
 // Unknown args → treat as natural language search
-const known = ["ls", "search", "new", "ps", "attach", "kill", "resume", "config", "help"];
+const known = ["ls", "search", "new", "ps", "attach", "kill", "resume", "config", "setup", "help"];
 const args = process.argv.slice(2);
 
 if (args.length === 0) {
