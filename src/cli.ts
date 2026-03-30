@@ -22,7 +22,7 @@ program
   .command("list")
   .description("List recent sessions from history")
   .option("-n, --number <n>", "Number of sessions to show", "20")
-  .action((opts) => listCommand(parseInt(opts.number, 10)));
+  .action(async (opts) => listCommand(parseInt(opts.number, 10)));
 
 program
   .command("search <keyword>")

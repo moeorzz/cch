@@ -38,22 +38,29 @@ ${table}
 如果没有匹配的，返回 "0"。
 例如：3,7,12`;
 
-  try {
-    const result = execFileSync(config.claudeCommand, ["-p", prompt], {
-      encoding: "utf-8",
-      timeout: 30000,
-      stdio: ["pipe", "pipe", "pipe"],
-    });
+  // Try with haiku first (faster, cheaper), fallback to default
+  for (const args of [
+    ["-p", prompt, "--model", "haiku"],
+    ["-p", prompt],
+  ]) {
+    try {
+      const result = execFileSync(config.claudeCommand, args, {
+        encoding: "utf-8",
+        timeout: 30000,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
 
-    const indices: number[] = [];
-    for (const part of result.trim().replace(/\s/g, "").split(",")) {
-      const n = parseInt(part, 10);
-      if (!isNaN(n) && n >= 1 && n <= sessions.length) {
-        indices.push(n);
+      const indices: number[] = [];
+      for (const part of result.trim().replace(/\s/g, "").split(",")) {
+        const n = parseInt(part, 10);
+        if (!isNaN(n) && n >= 1 && n <= sessions.length) {
+          indices.push(n);
+        }
       }
+      if (indices.length > 0) return indices;
+    } catch {
+      continue;
     }
-    return indices;
-  } catch {
-    return [];
   }
+  return [];
 }
