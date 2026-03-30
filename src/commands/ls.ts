@@ -21,6 +21,6 @@ export async function lsCommand(n: number): Promise<void> {
   const result = await interactiveSelect(items);
   if (result.action === "select" && result.value >= 0) {
     const s = sessions[result.value];
-    await resumeInSession(s.sessionId, s.cwd);
+    await resumeInSession(s.sessionId, s.cwd, s.firstMsg.replace(/\n/g, " ").slice(0, 50));
   }
 }

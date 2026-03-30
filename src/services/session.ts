@@ -70,14 +70,14 @@ export async function killSession(name: string): Promise<void> {
   removeSessionMeta(name);
 }
 
-export async function resumeInSession(sessionId: string, cwd: string): Promise<void> {
+export async function resumeInSession(sessionId: string, cwd: string, description?: string): Promise<void> {
   const backend = await getBackend();
   const config = getConfig();
   const dirName = basename(cwd);
   const name = `ch-${dirName}-${sessionId.slice(0, 8)}`;
 
   setSessionMeta(name, {
-    description: `resumed: ${sessionId.slice(0, 8)}`,
+    description: description || sessionId.slice(0, 8),
     cwd,
     createdAt: new Date().toISOString(),
   });

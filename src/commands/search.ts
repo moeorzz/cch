@@ -30,7 +30,7 @@ export async function searchCommand(keyword: string): Promise<void> {
     const idx = parseInt(answer, 10);
     if (idx >= 1 && idx <= matches.length) {
       const s = matches[idx - 1];
-      await resumeInSession(s.sessionId, s.cwd);
+      await resumeInSession(s.sessionId, s.cwd, s.firstMsg.replace(/\n/g, " ").slice(0, 50));
     }
   }
 }

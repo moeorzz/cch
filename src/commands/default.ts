@@ -41,7 +41,7 @@ export async function defaultCommand(query: string): Promise<void> {
     rl.close();
     if (answer.trim().toLowerCase() !== "n") {
       const s = sessions[indices[0] - 1];
-      await resumeInSession(s.sessionId, s.cwd);
+      await resumeInSession(s.sessionId, s.cwd, s.firstMsg.replace(/\n/g, " ").slice(0, 50));
     }
   } else {
     const answer = await new Promise<string>((resolve) => {
@@ -51,7 +51,7 @@ export async function defaultCommand(query: string): Promise<void> {
     const pick = parseInt(answer, 10);
     if (pick >= 1 && pick <= indices.length) {
       const s = sessions[indices[pick - 1] - 1];
-      await resumeInSession(s.sessionId, s.cwd);
+      await resumeInSession(s.sessionId, s.cwd, s.firstMsg.replace(/\n/g, " ").slice(0, 50));
     }
   }
 }
