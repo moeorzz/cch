@@ -38,8 +38,6 @@ export async function psCommand(): Promise<void> {
     if (result.action === "delete") {
       const s = sessions[result.value];
       await killSession(s.name);
-      console.log(`Killed: ${s.name}`);
-      // Loop back to show updated list
       continue;
     }
 
