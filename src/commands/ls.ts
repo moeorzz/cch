@@ -10,6 +10,14 @@ export async function lsCommand(): Promise<void> {
   }
 
   const meta = getSessionsMeta();
+
+  // Sort by createdAt descending (newest first)
+  sessions.sort((a, b) => {
+    const timeA = meta[a.name]?.createdAt || "";
+    const timeB = meta[b.name]?.createdAt || "";
+    return timeB.localeCompare(timeA);
+  });
+
   const items = sessions.map((s, i) => {
     const num = String(i + 1).padStart(3);
     const desc = meta[s.name]?.description || "";
