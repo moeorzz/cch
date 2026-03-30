@@ -66,7 +66,8 @@ export function interactiveSelect(items: SelectItem[], hint = "Up/Down to naviga
     function renderLines(): string[] {
       const { start, end } = getWindow();
       const lines: string[] = [];
-      lines.push(truncate(`${DIM}${hint}${RESET}`, cols));
+      const inputDisplay = inputBuf ? ` > ${inputBuf}_` : "";
+      lines.push(truncate(`${DIM}${hint}${RESET}${inputDisplay}`, cols));
 
       for (let i = start; i < end; i++) {
         const raw = items[i].label;
@@ -110,21 +111,9 @@ export function interactiveSelect(items: SelectItem[], hint = "Up/Down to naviga
       drawnLines = lines.length;
     }
 
-    // Number input buffer: collects digits, applies after 600ms pause
-    let numBuf = "";
-    let numTimer: ReturnType<typeof setTimeout> | null = null;
-
-    function applyNumBuf() {
-      const num = parseInt(numBuf, 10);
-      numBuf = "";
-      if (!isNaN(num) && num >= 1 && num <= items.length) {
-        cursor = num - 1;
-        draw();
-      }
-    }
+    let inputBuf = "";
 
     function cleanup() {
-      if (numTimer) clearTimeout(numTimer);
       process.stdin.setRawMode(false);
       process.stdin.removeListener("data", onData);
       process.stdin.pause();
@@ -135,27 +124,38 @@ export function interactiveSelect(items: SelectItem[], hint = "Up/Down to naviga
       const key = buf.toString();
 
       if (key === `${ESC}[A` || key === "k") {
+        inputBuf = "";
         if (cursor > 0) cursor--;
         draw();
       } else if (key === `${ESC}[B` || key === "j") {
+        inputBuf = "";
         if (cursor < items.length - 1) cursor++;
         draw();
       } else if (key === "\r" || key === "\n") {
+        // If there's a number in the input buffer, use that
+        if (inputBuf) {
+          const num = parseInt(inputBuf, 10);
+          if (num >= 1 && num <= items.length) {
+            cleanup();
+            resolve(items[num - 1].value);
+            return;
+          }
+        }
+        // Otherwise use arrow-selected item
         cleanup();
         resolve(items[cursor].value);
       } else if (key === ESC || key === "q" || key === "\x03") {
         cleanup();
         resolve(-1);
-      } else if (/^[0-9]$/.test(key)) {
-        // Accumulate digits, apply after short pause
-        numBuf += key;
-        if (numTimer) clearTimeout(numTimer);
-        // If the number is already larger than max, apply immediately
-        if (parseInt(numBuf, 10) > items.length) {
-          applyNumBuf();
-        } else {
-          numTimer = setTimeout(applyNumBuf, 600);
+      } else if (key === "\x7f" || key === "\b") {
+        // Backspace
+        if (inputBuf.length > 0) {
+          inputBuf = inputBuf.slice(0, -1);
+          draw();
         }
+      } else if (/^[0-9]$/.test(key)) {
+        inputBuf += key;
+        draw();
       }
     }
 
