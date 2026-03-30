@@ -113,7 +113,7 @@ claude
 ### 5. 安装 CCH
 
 ```bash
-npm install -g cch
+npm install -g @halooojustin/cch
 ```
 
 ### 6. 设置 shell 别名

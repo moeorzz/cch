@@ -16,7 +16,7 @@ Claude Code stores conversation history in `~/.claude/projects/`, scoped per dir
 ## Install
 
 ```bash
-npm install -g cch
+npm install -g @halooojustin/cch
 ch setup          # adds shell aliases (cn, cnf, cls, cps, chs)
 source ~/.zshrc   # or open a new terminal
 ```

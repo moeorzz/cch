@@ -16,7 +16,7 @@ Claude Code 的对话历史存在 `~/.claude/projects/` 下，按项目目录隔
 ## 安装
 
 ```bash
-npm install -g cch
+npm install -g @halooojustin/cch
 ch setup          # 自动添加 shell 别名 (cn, cnf, cls, cps, chs)
 source ~/.zshrc   # 或新开终端
 ```
