@@ -4,13 +4,11 @@
  */
 
 const ESC = "\x1b";
-const CLEAR_LINE = `${ESC}[2K`;
-const CURSOR_UP = (n: number) => `${ESC}[${n}A`;
+const CLEAR_LINE = `${ESC}[2K\r`;
 const CURSOR_HIDE = `${ESC}[?25l`;
 const CURSOR_SHOW = `${ESC}[?25h`;
 const DIM = `${ESC}[2m`;
 const RESET = `${ESC}[0m`;
-const BOLD = `${ESC}[1m`;
 const CYAN_BG = `${ESC}[46m${ESC}[30m`;
 
 export interface SelectItem {
@@ -18,55 +16,98 @@ export interface SelectItem {
   value: number;
 }
 
-/**
- * Show an interactive list. User navigates with arrow keys, Enter to select, Esc/q to cancel.
- * Returns the selected item's value, or -1 if cancelled.
- */
-export function interactiveSelect(items: SelectItem[], hint = "Arrow keys to navigate, Enter to select, Esc to cancel"): Promise<number> {
+/** Truncate string to fit terminal width, accounting for wide (CJK) chars */
+function truncate(str: string, maxWidth: number): string {
+  let width = 0;
+  let i = 0;
+  for (; i < str.length; i++) {
+    const code = str.codePointAt(i)!;
+    // CJK characters take 2 columns
+    const charWidth = (code >= 0x1100 && (
+      (code <= 0x115f) || // Hangul Jamo
+      (code >= 0x2e80 && code <= 0xa4cf && code !== 0x303f) || // CJK
+      (code >= 0xac00 && code <= 0xd7a3) || // Hangul Syllables
+      (code >= 0xf900 && code <= 0xfaff) || // CJK Compatibility
+      (code >= 0xfe10 && code <= 0xfe6f) || // CJK Forms
+      (code >= 0xff01 && code <= 0xff60) || // Fullwidth Forms
+      (code >= 0xffe0 && code <= 0xffe6) ||
+      (code >= 0x20000 && code <= 0x2fffd) ||
+      (code >= 0x30000 && code <= 0x3fffd)
+    )) ? 2 : 1;
+    if (width + charWidth > maxWidth) break;
+    width += charWidth;
+    if (code > 0xffff) i++; // surrogate pair
+  }
+  return str.slice(0, i);
+}
+
+/** Strip ANSI escape codes for width calculation */
+function stripAnsi(str: string): string {
+  return str.replace(/\x1b\[[0-9;]*m/g, "");
+}
+
+export function interactiveSelect(items: SelectItem[], hint = "Up/Down to navigate, Enter to select, Esc to cancel"): Promise<number> {
   if (!process.stdin.isTTY) return Promise.resolve(-1);
 
   return new Promise((resolve) => {
     let cursor = 0;
-    const pageSize = Math.min(items.length, process.stdout.rows ? process.stdout.rows - 4 : 20);
+    const cols = process.stdout.columns || 80;
+    const rows = process.stdout.rows || 24;
+    const pageSize = Math.min(items.length, rows - 4);
 
-    function render() {
-      // Calculate visible window
+    function getWindow(): { start: number; end: number } {
       let start = 0;
       if (cursor >= pageSize) {
         start = cursor - pageSize + 1;
       }
-      const end = Math.min(start + pageSize, items.length);
+      return { start, end: Math.min(start + pageSize, items.length) };
+    }
 
+    function renderLines(): string[] {
+      const { start, end } = getWindow();
       const lines: string[] = [];
-      lines.push(`${DIM}${hint}${RESET}`);
+      lines.push(truncate(`${DIM}${hint}${RESET}`, cols));
+
       for (let i = start; i < end; i++) {
+        const raw = items[i].label;
         if (i === cursor) {
-          lines.push(`${CYAN_BG} > ${items[i].label} ${RESET}`);
+          const label = truncate(raw, cols - 4);
+          lines.push(`${CYAN_BG} > ${label} ${RESET}`);
         } else {
-          lines.push(`   ${items[i].label}`);
+          const label = truncate(raw, cols - 3);
+          lines.push(`   ${label}`);
         }
       }
+
       if (end < items.length) {
         lines.push(`${DIM}  ... ${items.length - end} more below${RESET}`);
       }
       return lines;
     }
 
-    let prevLineCount = 0;
+    let drawnLines = 0;
 
     function draw() {
-      // Clear previous output
-      if (prevLineCount > 0) {
-        process.stdout.write(CURSOR_UP(prevLineCount));
-        for (let i = 0; i < prevLineCount; i++) {
-          process.stdout.write(`${CLEAR_LINE}\n`);
-        }
-        process.stdout.write(CURSOR_UP(prevLineCount));
+      // Move to top of previously drawn area and clear
+      for (let i = 0; i < drawnLines; i++) {
+        process.stdout.write(`${ESC}[A`); // up one line
       }
 
-      const lines = render();
-      process.stdout.write(lines.join("\n") + "\n");
-      prevLineCount = lines.length;
+      const lines = renderLines();
+      for (let i = 0; i < lines.length; i++) {
+        process.stdout.write(`${CLEAR_LINE}${lines[i]}\n`);
+      }
+      // Clear any leftover lines from previous render
+      for (let i = lines.length; i < drawnLines; i++) {
+        process.stdout.write(`${CLEAR_LINE}\n`);
+      }
+      // Move back up for leftover cleared lines
+      const extra = Math.max(0, drawnLines - lines.length);
+      for (let i = 0; i < extra; i++) {
+        process.stdout.write(`${ESC}[A`);
+      }
+
+      drawnLines = lines.length;
     }
 
     function cleanup() {
@@ -79,36 +120,24 @@ export function interactiveSelect(items: SelectItem[], hint = "Arrow keys to nav
     function onData(buf: Buffer) {
       const key = buf.toString();
 
-      // Arrow up or k
       if (key === `${ESC}[A` || key === "k") {
         if (cursor > 0) cursor--;
         draw();
-        return;
-      }
-      // Arrow down or j
-      if (key === `${ESC}[B` || key === "j") {
+      } else if (key === `${ESC}[B` || key === "j") {
         if (cursor < items.length - 1) cursor++;
         draw();
-        return;
-      }
-      // Enter
-      if (key === "\r" || key === "\n") {
+      } else if (key === "\r" || key === "\n") {
         cleanup();
         resolve(items[cursor].value);
-        return;
-      }
-      // Escape, q, Ctrl+C
-      if (key === ESC || key === "q" || key === "\x03") {
+      } else if (key === ESC || key === "q" || key === "\x03") {
         cleanup();
         resolve(-1);
-        return;
-      }
-      // Number input: jump to that item
-      const num = parseInt(key, 10);
-      if (!isNaN(num) && num >= 1 && num <= items.length) {
-        cursor = num - 1;
-        draw();
-        return;
+      } else {
+        const num = parseInt(key, 10);
+        if (!isNaN(num) && num >= 1 && num <= items.length) {
+          cursor = num - 1;
+          draw();
+        }
       }
     }
 
