@@ -42,6 +42,7 @@ export async function createNewSession(cwd: string, description?: string): Promi
     command: config.claudeCommand,
     args: config.claudeArgs,
     cwd,
+    description,
   });
 }
 

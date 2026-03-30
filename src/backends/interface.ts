@@ -9,6 +9,7 @@ export interface CreateSessionOpts {
   command: string;
   args: string[];
   cwd: string;
+  description?: string;
 }
 
 export interface SessionBackend {

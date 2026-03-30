@@ -51,9 +51,10 @@ export class ZellijBackend implements SessionBackend {
     const layoutPath = join(dir, `${opts.name}-layout.kdl`);
     const configPath = join(dir, `${opts.name}-config.kdl`);
 
+    const tabName = opts.description || opts.name;
     writeFileSync(
       layoutPath,
-      `layout {\n    pane command="${opts.command}" cwd="${opts.cwd}" {\n        args ${safeArgs}\n    }\n}\n`,
+      `layout {\n    tab name="${tabName}" {\n        pane command="${opts.command}" cwd="${opts.cwd}" {\n            args ${safeArgs}\n        }\n    }\n}\n`,
     );
 
     writeFileSync(
