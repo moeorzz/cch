@@ -75,10 +75,15 @@ export class ZellijBackend implements SessionBackend {
   }
 
   killSession(name: string): void {
+    // Try kill first (running sessions), then delete (exited sessions)
     try {
       execFileSync("zellij", ["kill-session", name], { stdio: "pipe" });
     } catch {
-      // session might not exist
+      try {
+        execFileSync("zellij", ["delete-session", name], { stdio: "pipe" });
+      } catch {
+        // session might not exist
+      }
     }
   }
 }
