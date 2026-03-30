@@ -45,7 +45,7 @@ Just describe what you remember. AI finds the session.
 ```bash
 ch the iOS debugging session
 ch the one where I was deploying openclaw
-ch that wallet refactor
+ch the wallet refactor last week
 ```
 
 `ch` pipes your query + session list to `claude -p` (tries Haiku first for speed, falls back to default model), which returns the best matches. Pick one and it resumes in your multiplexer.
