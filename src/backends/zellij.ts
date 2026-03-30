@@ -1,8 +1,13 @@
-import { execFileSync, execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { SessionBackend, ActiveSession, CreateSessionOpts } from "./interface.js";
+
+/** Escape a string for embedding inside KDL double-quoted values */
+function escapeKdl(s: string): string {
+  return s.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
 
 export class ZellijBackend implements SessionBackend {
   name = "zellij";
@@ -51,22 +56,22 @@ export class ZellijBackend implements SessionBackend {
     const layoutPath = join(dir, `${opts.name}-layout.kdl`);
     const configPath = join(dir, `${opts.name}-config.kdl`);
 
-    const tabName = opts.description || opts.name;
+    const tabName = escapeKdl(opts.description || opts.name);
     writeFileSync(
       layoutPath,
-      `layout {\n    tab name="${tabName}" {\n        pane command="zsh" cwd="${opts.cwd}" {\n            args "-lc" "${fullCmd}"\n        }\n    }\n}\n`,
+      `layout {\n    tab name="${tabName}" {\n        pane command="zsh" cwd="${escapeKdl(opts.cwd)}" {\n            args "-lc" "${escapeKdl(fullCmd)}"\n        }\n    }\n}\n`,
     );
 
     writeFileSync(
       configPath,
-      `session_name "${opts.name}"\nattach_to_session true\ndefault_layout "${layoutPath}"\n`,
+      `session_name "${escapeKdl(opts.name)}"\nattach_to_session true\ndefault_layout "${escapeKdl(layoutPath)}"\n`,
     );
 
-    execSync(`zellij --config "${configPath}"`, { stdio: "inherit" });
+    execFileSync("zellij", ["--config", configPath], { stdio: "inherit" });
   }
 
   attachSession(name: string): void {
-    execSync(`zellij attach "${name}"`, { stdio: "inherit" });
+    execFileSync("zellij", ["attach", name], { stdio: "inherit" });
   }
 
   killSession(name: string): void {

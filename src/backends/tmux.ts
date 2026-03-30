@@ -1,4 +1,4 @@
-import { execFileSync, execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import type { SessionBackend, ActiveSession, CreateSessionOpts } from "./interface.js";
 
 export class TmuxBackend implements SessionBackend {
@@ -39,21 +39,20 @@ export class TmuxBackend implements SessionBackend {
 
     try {
       execFileSync("tmux", ["has-session", "-t", opts.name], { stdio: "pipe" });
-      execSync(`tmux attach -t "${opts.name}"`, { stdio: "inherit" });
+      execFileSync("tmux", ["attach", "-t", opts.name], { stdio: "inherit" });
       return;
     } catch {
       // session doesn't exist, create it
     }
 
-    execSync(
-      `tmux new-session -d -s "${opts.name}" -c "${opts.cwd}" '${cmd}'`,
-      { stdio: "pipe" },
-    );
-    execSync(`tmux attach -t "${opts.name}"`, { stdio: "inherit" });
+    execFileSync("tmux", ["new-session", "-d", "-s", opts.name, "-c", opts.cwd, cmd], {
+      stdio: "pipe",
+    });
+    execFileSync("tmux", ["attach", "-t", opts.name], { stdio: "inherit" });
   }
 
   attachSession(name: string): void {
-    execSync(`tmux attach -t "${name}"`, { stdio: "inherit" });
+    execFileSync("tmux", ["attach", "-t", name], { stdio: "inherit" });
   }
 
   killSession(name: string): void {
