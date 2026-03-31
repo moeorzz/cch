@@ -34,7 +34,7 @@ cp -r $(npm root -g)/cch/skill ~/.claude/skills/cch
 **前置条件：**
 - Node.js >= 18
 - 已安装 [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
-- 已安装 [Zellij](https://zellij.dev/) 或 [tmux](https://github.com/tmux/tmux)（至少一个）
+- 已安装 [Zellij](https://zellij.dev/)（推荐）或 [tmux](https://github.com/tmux/tmux) — 安装：`brew install zellij`
 
 ## 使用方法
 

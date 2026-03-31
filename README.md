@@ -34,7 +34,7 @@ Then you can just tell Claude Code things like "find my iOS debugging conversati
 **Requirements:**
 - Node.js >= 18
 - [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed
-- [Zellij](https://zellij.dev/) or [tmux](https://github.com/tmux/tmux) (at least one)
+- [Zellij](https://zellij.dev/) (recommended) or [tmux](https://github.com/tmux/tmux) — install one: `brew install zellij`
 
 ## Usage
 
