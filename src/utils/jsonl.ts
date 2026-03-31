@@ -35,6 +35,38 @@ function extractUserText(content: unknown): string {
   return "";
 }
 
+/** Read last N bytes of a file to find custom-title */
+function readTail(filePath: string, bytes: number): string {
+  try {
+    const fd = openSync(filePath, "r");
+    try {
+      const size = statSync(filePath).size;
+      const start = Math.max(0, size - bytes);
+      const buf = Buffer.alloc(Math.min(bytes, size));
+      readSync(fd, buf, 0, buf.length, start);
+      return buf.toString("utf-8");
+    } finally { closeSync(fd); }
+  } catch {
+    return "";
+  }
+}
+
+/** Extract the last custom-title from file tail */
+function extractCustomTitle(filePath: string): string {
+  const tail = readTail(filePath, 2 * 1024 * 1024);
+  let title = "";
+  for (const line of tail.split("\n")) {
+    if (!line.includes("custom-title")) continue;
+    try {
+      const data = JSON.parse(line);
+      if (data.type === "custom-title" && typeof data.customTitle === "string") {
+        title = data.customTitle;
+      }
+    } catch { /* skip */ }
+  }
+  return title;
+}
+
 export function parseJsonl(filePath: string, knownMtime?: number): SessionInfo | null {
   try {
     const fd = openSync(filePath, "r");
@@ -80,7 +112,12 @@ export function parseJsonl(filePath: string, knownMtime?: number): SessionInfo |
 
     if (!firstMsg) return null;
 
-    // 复用已知的 mtime，避免重复 statSync
+    // Check for custom title (user renamed the conversation)
+    const customTitle = extractCustomTitle(filePath);
+    if (customTitle) {
+      firstMsg = customTitle;
+    }
+
     const mtime = knownMtime ?? statSync(filePath).mtimeMs;
     if (!timestamp) {
       timestamp = new Date(mtime).toISOString();
