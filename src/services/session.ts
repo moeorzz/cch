@@ -70,7 +70,22 @@ export async function killSession(name: string): Promise<void> {
   removeSessionMeta(name);
 }
 
-export async function resumeInSession(sessionId: string, cwd: string, description?: string): Promise<void> {
+export async function resumeDirectly(sessionId: string, cwd: string): void {
+  const config = getConfig();
+  process.chdir(cwd);
+  process.execArgv;
+  const { execSync } = await import("node:child_process");
+  execSync(`${config.claudeCommand} ${config.claudeArgs.join(" ")} --resume ${sessionId}`, {
+    stdio: "inherit",
+    cwd,
+  });
+}
+
+export async function resumeInSession(sessionId: string, cwd: string, description?: string, useMux = false): Promise<void> {
+  if (!useMux) {
+    return resumeDirectly(sessionId, cwd);
+  }
+
   const backend = await getBackend();
   const config = getConfig();
   const dirName = basename(cwd);

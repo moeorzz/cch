@@ -23,7 +23,8 @@ program
   .command("ls")
   .description("List recent conversation history")
   .option("-n, --number <n>", "Number of sessions to show", "20")
-  .action(async (opts) => lsCommand(parseInt(opts.number, 10)));
+  .option("-m, --mux", "Resume in multiplexer (tmux/Zellij) instead of current terminal")
+  .action(async (opts) => lsCommand(parseInt(opts.number, 10), opts.mux || false));
 
 program
   .command("search <keyword>")
