@@ -26,17 +26,6 @@ export function makeSessionName(cwd: string, description?: string): string {
   return `ch-${dirName}-${hash}`;
 }
 
-function getCmuxHookArgs(): string[] {
-  if (!process.env.CMUX_SOCKET_PATH) return [];
-  const hooks = {
-    SessionStart: [{ matcher: "", hooks: [{ type: "command", command: "cmux claude-hook session-start", timeout: 10 }] }],
-    Stop: [{ matcher: "", hooks: [{ type: "command", command: "cmux claude-hook stop", timeout: 10 }] }],
-    SessionEnd: [{ matcher: "", hooks: [{ type: "command", command: "cmux claude-hook session-end", timeout: 1 }] }],
-    Notification: [{ matcher: "", hooks: [{ type: "command", command: "cmux claude-hook notification", timeout: 10 }] }],
-  };
-  return ["--settings", JSON.stringify({ hooks })];
-}
-
 export async function createNewSession(cwd: string, description?: string): Promise<void> {
   const backend = await getBackend();
   const config = getConfig();
@@ -51,7 +40,7 @@ export async function createNewSession(cwd: string, description?: string): Promi
   backend.createSession({
     name,
     command: config.claudeCommand,
-    args: [...config.claudeArgs, ...getCmuxHookArgs()],
+    args: config.claudeArgs,
     cwd,
     description,
   });
@@ -96,7 +85,7 @@ export async function resumeInSession(sessionId: string, cwd: string, descriptio
   backend.createSession({
     name,
     command: config.claudeCommand,
-    args: [...config.claudeArgs, ...getCmuxHookArgs(), "--resume", sessionId],
+    args: [...config.claudeArgs, "--resume", sessionId],
     cwd,
   });
 }
